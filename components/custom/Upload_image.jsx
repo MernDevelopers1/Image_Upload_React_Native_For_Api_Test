@@ -1,26 +1,82 @@
-import React,{useState, useEffect, useRef} from 'react'
-import { StyleSheet,View, Text } from 'react-native'
-import { Camera, CameraType } from 'expo-camera'
+import React, { useRef, useState } from 'react';
+import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useData } from './useContext/DataContext';
+import { useNavigation } from 'expo-router';
 
-const Upload_image = () => {
-    const [hasCamerPermission,setHasCameraPermission] = useState(null);
-    const [image,setImage] = useState(null);
-    const [type,setType] = useState(Camera.Constants.Type.front);
-    // const [flash,setFlash] = useState(Camera.Constants.FlashMode.off);
-    const cameraRef = useRef(null);
+export default function App() {
+  const navigation = useNavigation();
+  const [facing, setFacing] = useState('front');
+  const{setBase64Image} = useData();
+  
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef(null);
 
-  //   useEffect(() => {
-  //   (async () => {
-  //     const { status } = await Camera.requestCameraPermissionsAsync();
-  //     setHasCameraPermission(status === 'granted');
-  //   })();
-  // }, []);
+  if (!permission) {
+    // Camera permissions are still loading.
+    return <View />;
+  }
+
+  if (!permission.granted) {
+    // Camera permissions are not granted yet.
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: 'center' }}>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission} title="Grant Permission" />
+      </View>
+    );
+  }
+
+  const takePhoto = async () => {
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync({base64: true});
+      setBase64Image(photo.base64);
+      navigation.navigate("index")
+    }
+  };
+
+  const toggleCameraFacing = () => {
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
+  };
 
   return (
-    <View>
-      <Text>Upload_image</Text>
+    <View style={styles.container}>
+      <CameraView ref={cameraRef} style={styles.camera} facing={facing}>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
+            <Text style={styles.text}>Flip Camera</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={takePhoto}>
+            <Text style={styles.text}>Take Photo</Text>
+          </TouchableOpacity>
+        </View>
+      </CameraView>
+      
     </View>
-  )
+  );
 }
 
-export default Upload_image
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  camera: {
+    flex: 1,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 16,
+  },
+  button: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 5,
+  },
+  text: {
+    fontSize: 16,
+    color: 'black',
+  },
+   
+});

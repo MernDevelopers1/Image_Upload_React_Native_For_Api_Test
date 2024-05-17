@@ -4,6 +4,7 @@ import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function App() {
   const [facing, setFacing] = useState('back');
+  
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
    const [image, setImage] = useState(null);
@@ -31,7 +32,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing}  >
+      <CameraView style={styles.camera} facing={facing}   >
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
             <Text style={styles.text}>Flip Camera</Text>
