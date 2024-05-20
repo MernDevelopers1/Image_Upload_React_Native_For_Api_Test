@@ -1,35 +1,66 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import { useData } from './useContext/DataContext'
-import { useNavigation } from 'expo-router'
+import {  Link, useRouter } from 'expo-router'
 
 const Main = () => {
-    const navigation = useNavigation();
+    const router = useRouter();
     const {Base64Image,setBase64Image} = useData();
     const postImage = async () => {
+      try{
+
         const formdata = new FormData();
-        formdata.append("image1",Base64Image);
+        formdata.append("image1",Base64Image.image1);
+        formdata.append("image2",Base64Image.image2);
+        const result = await fetch("http://192.168.60.116:8080/compare_faces", {
+          method: "POST",
+          body: formdata,
+          headers: {
+            'Content-Type': 'multipart/formdata',
+            // 'Accept': 'application/json', // Adjust as needed
+          },
+        });
+        const data = await result.json();
+        console.log(data);
+      }catch(e){
+        console.log(e);
+      }
         
     }
   return (
     <View style={styles.container}>
-      {Base64Image && (
+    {Base64Image && (Base64Image.image1 || Base64Image.image2) &&
+    <View style={styles.imgContainer}>
+
+      {Base64Image && Base64Image.image1 && (
         <Image
           style={styles.preview}
-          source={{ uri: `data:image/jpeg;base64,${Base64Image}` }}
+          source={{ uri: `data:image/jpeg;base64,${Base64Image.image1}` }}
         />
       )}
+      {Base64Image && Base64Image.image2 && (
+        <Image
+          style={styles.preview}
+          source={{ uri: `data:image/jpeg;base64,${Base64Image.image2}` }}
+        />
+      )}
+    </View>}
+
       <View style={styles.ButtonContainer}>
 
-      <TouchableOpacity style={styles.buttonStyle} onPress={()=>navigation.navigate("Camera")}>
-      <Text style={styles.buttonText}>Open Camera</Text>
+      <Link style={styles.buttonStyle} href={`/Camera?image=1`}>
+      <Text style={styles.buttonText}>Add Image 1</Text>
+
+      </Link>
+      <Link style={styles.buttonStyle} href={`/Camera?image=2`}>
+      <Text style={styles.buttonText}>Add Image 2</Text>
+
+      </Link>
+      <TouchableOpacity style={styles.buttonStyle} disable={Base64Image&&Base64Image.image1&&Base64Image.image2? false:true} onPress={postImage}>
+      <Text style={styles.buttonText}>Compare</Text>
 
       </TouchableOpacity>
-      <TouchableOpacity style={styles.buttonStyle} onPress={()=>navigation.navigate("Camera")}>
-      <Text style={styles.buttonText}>Post</Text>
-
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.buttonStyle,{backgroundColor:!Base64Image?"lightblue":"skyblue"}]} disabled={Base64Image? false: true} onPress={()=>setBase64Image(null)}>
+      <TouchableOpacity style={[styles.buttonStyle,{backgroundColor:!Base64Image?"lightblue":"skyblue"}]} disabled={Base64Image? false: true} onPress={()=>setBase64Image({image1:"",image2:""})}>
       <Text style={styles.buttonText}>Reset</Text>
 
       </TouchableOpacity>
@@ -47,17 +78,23 @@ const styles = StyleSheet.create({
         justifyContent:"center",
         alignItems:"center"
     },
+    imgContainer:{
+      width:"100%",
+      height:"50%",
+      flexDirection:"row"
+    },
     preview: {
         height:"50%",
-        margin:20,
+        width:"45%",
+        margin:10,
         borderRadius:20,
         alignSelf: 'stretch',
   },
 
   buttonStyle:{
-    padding:10,
+    paddingVertical:10,
     backgroundColor:"skyblue",
-    width:"30%",
+    width:"20%",
     borderRadius:10,
     marginVertical:10,
     textAlign:"center"
@@ -67,7 +104,8 @@ const styles = StyleSheet.create({
     justifyContent:"center",
     alignItems:"center",
     flexDirection: "row",
-    gap:10
+    gap:10, 
+    flexWrap:"wrap"
   },
   buttonText:{
     textAlign:"center"

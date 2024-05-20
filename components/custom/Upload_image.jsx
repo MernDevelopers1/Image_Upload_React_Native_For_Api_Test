@@ -1,13 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useData } from './useContext/DataContext';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useLocalSearchParams } from 'expo-router';
+
 
 export default function App() {
   const navigation = useNavigation();
   const [facing, setFacing] = useState('front');
   const{setBase64Image} = useData();
+  const {image} = useLocalSearchParams();
   
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
@@ -30,7 +32,7 @@ export default function App() {
   const takePhoto = async () => {
     if (cameraRef.current) {
       const photo = await cameraRef.current.takePictureAsync({base64: true});
-      setBase64Image(photo.base64);
+      setBase64Image(prev=>({...prev,[`image${image}`]:photo.base64}));
       navigation.navigate("index")
     }
   };
@@ -63,11 +65,13 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+    justifyContent:"flex-end"
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 16,
+    // alignSelf:"flex-end"
   },
   button: {
     backgroundColor: 'white',
